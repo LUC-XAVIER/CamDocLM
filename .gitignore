@@ -1,3 +1,7 @@
 .vscode/
 
+# SynthText repo
 SynthText_Service/
+
+# documents' sample reference images
+data/bg

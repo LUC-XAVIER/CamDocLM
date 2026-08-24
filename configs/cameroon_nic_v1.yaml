@@ -1,0 +1,70 @@
+document_type: "Cameroon_NIC_v1"
+backgrounds:
+  - "data/bg/cameroon_nic_v1/FrontNIC_fixed.png"
+  - "data/bg/cameroon_nic_v1/backNIC_fixed.png"
+fonts: "data/fonts/"
+fields:
+  # --- FRONT (810x1079) ---
+  # Data fields in the lower portion of the portrait card
+  - name: "surname"
+    position: [155, 780]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 18
+    side: "front"
+  - name: "given_names"
+    position: [155, 835]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 18
+    side: "front"
+  - name: "date_of_birth"
+    position: [155, 885]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "front"
+  - name: "sex"
+    position: [475, 885]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "front"
+  - name: "expiry_date"
+    position: [155, 935]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "front"
+  # --- BACK (810x1078) ---
+  # All remaining fields are on the back
+  - name: "father_name"
+    position: [80, 475]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "back"
+  - name: "mother_name"
+    position: [80, 558]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "back"
+  - name: "place_of_birth"
+    position: [80, 638]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "back"
+  - name: "occupation"
+    position: [80, 715]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "back"
+  - name: "issue_date"
+    position: [80, 793]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "back"
+  - name: "height"
+    position: [395, 793]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "back"
+  - name: "nic_number"
+    position: [80, 855]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "back"

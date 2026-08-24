@@ -1,0 +1,60 @@
+document_type: "Cameroon_Driving_License"
+backgrounds:
+  - "data/bg/cameroon_driving_license/driving_licence_front.png"
+  - "data/bg/cameroon_driving_license/driving_licence_back.png"
+fonts: "data/fonts/"
+fields:
+  # --- FRONT (1080x810) ---
+  # Fields 1-5, 4c, 4d all appear on the front right column
+  - name: "surname"
+    position: [455, 357]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 18
+    side: "front"
+  - name: "given_names"
+    position: [455, 398]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 18
+    side: "front"
+  - name: "date_of_birth"
+    position: [455, 433]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "front"
+  - name: "place_of_birth"
+    position: [570, 433]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "front"
+  - name: "issue_date"
+    position: [455, 462]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "front"
+  - name: "issued_by"
+    position: [590, 462]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "front"
+  - name: "expiry_date"
+    position: [455, 490]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "front"
+  - name: "document_discriminator"
+    position: [590, 490]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "front"
+  - name: "licence_number"
+    position: [455, 521]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "front"
+  # --- BACK (1080x810) ---
+  # Only item 14 (national reg number) is on the back
+  - name: "national_reg_number"
+    position: [205, 325]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "back"

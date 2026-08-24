@@ -1,0 +1,89 @@
+document_type: "Cameroon_Passport"
+backgrounds:
+  - "data/bg/cameroon_passport/passport.png"
+fonts: "data/fonts/"
+fields:
+  # --- FRONT only (1080x810) ---
+  # Header row: type | country_code | passport_number
+  - name: "type"
+    position: [370, 100]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "front"
+  - name: "country_code"
+    position: [490, 100]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "front"
+  - name: "passport_number"
+    position: [700, 100]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 18
+    side: "front"
+  # Row 1: surname
+  - name: "surname"
+    position: [365, 145]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 18
+    side: "front"
+  # Row 2: given_names
+  - name: "given_names"
+    position: [365, 185]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 18
+    side: "front"
+  # Row 3: nationality | occupation
+  - name: "nationality"
+    position: [365, 228]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "front"
+  - name: "occupation"
+    position: [710, 228]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "front"
+  # Row 4: date_of_birth | height | can
+  - name: "date_of_birth"
+    position: [365, 270]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "front"
+  - name: "height"
+    position: [705, 270]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "front"
+  - name: "can"
+    position: [875, 270]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "front"
+  # Row 5: sex | place_of_birth
+  - name: "sex"
+    position: [365, 312]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "front"
+  - name: "place_of_birth"
+    position: [455, 312]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "front"
+  # Row 6: issue_date | place_of_issue
+  - name: "issue_date"
+    position: [365, 353]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "front"
+  - name: "place_of_issue"
+    position: [710, 353]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "front"
+  # Row 7: expiry_date
+  - name: "expiry_date"
+    position: [365, 393]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 16
+    side: "front"
