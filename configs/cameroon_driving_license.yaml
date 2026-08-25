@@ -3,6 +3,8 @@ backgrounds:
   - "data/bg/cameroon_driving_license/driving_licence_front.png"
   - "data/bg/cameroon_driving_license/driving_licence_back.png"
 fonts: "data/fonts/"
+json_samples:
+  - "data/json/driving_license_sample.json"
 fields:
   # --- FRONT (1080x810) ---
   # Fields 1-5, 4c, 4d all appear on the front right column

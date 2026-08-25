@@ -3,6 +3,8 @@ backgrounds:
   - "data/bg/cameroon_nic_v1/FrontNIC_fixed.png"
   - "data/bg/cameroon_nic_v1/backNIC_fixed.png"
 fonts: "data/fonts/"
+json_samples:
+  - "data/json/nic_sample.json"
 fields:
   # --- FRONT (810x1079) ---
   # Data fields in the lower portion of the portrait card

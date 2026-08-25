@@ -2,6 +2,8 @@ document_type: "Cameroon_Passport"
 backgrounds:
   - "data/bg/cameroon_passport/passport.png"
 fonts: "data/fonts/"
+json_samples:
+  - "data/json/passport_sample.json"
 fields:
   # --- FRONT only (1080x810) ---
   # Header row: type | country_code | passport_number
