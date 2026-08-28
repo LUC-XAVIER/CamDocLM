@@ -1,0 +1,98 @@
+document_type: "Cameroon_NIC_v3"
+backgrounds:
+  - "data/bg/cameroon_nic_v3/NIC_v3_front_blank.png"
+  - "data/bg/cameroon_nic_v3/NIC_v3_back_blank.png"
+fonts: "data/fonts/"
+json_samples:
+  - "data/json/nic_v3_sample.json"
+fields:
+  # --- FRONT ---
+  - name: "surname"
+    position: [274, 158]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    stroke_width: 0.2
+    size: 20
+    side: "front"
+  - name: "spouse"
+    position: [274, 188]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    stroke_width: 0.2
+    size: 20
+    side: "front"
+  - name: "given_names"
+    position: [525, 220]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    stroke_width: 0.2
+    size: 20
+    side: "front"
+  - name: "date_of_birth"
+    position: [525, 252]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    stroke_width: 0.2
+    size: 20
+    side: "front"
+  - name: "place_of_birth"
+    position: [525, 282]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    stroke_width: 0.2
+    size: 20
+    side: "front"
+  - name: "father_name"
+    position: [525, 312]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    stroke_width: 0.2
+    size: 20
+    side: "front"
+  - name: "mother_name"
+    position: [525, 370]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    stroke_width: 0.2
+    size: 20
+    side: "front"
+  - name: "occupation"
+    position: [525, 430]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    stroke_width: 0.2
+    size: 20
+    side: "front"
+  - name: "address"
+    position: [525, 460]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    stroke_width: 0.2
+    size: 20
+    side: "front"
+  - name: "height"
+    position: [560, 519]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    stroke_width: 0.2
+    size: 20
+    side: "front"
+  - name: "sex"
+    position: [560, 548]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    stroke_width: 0.2
+    size: 20
+    side: "front"
+  - name: "proffessional_matrimonial_situatn"
+    position: [560, 576]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    stroke_width: 0.2
+    size: 20
+    side: "front"
+
+  # --- BACK ---
+  - name: "issue_date"
+    position: [346, 395]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 20
+    side: "back"
+  - name: "expiry_date"
+    position: [762, 398]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 20
+    side: "back"
+  - name: "nic_number"
+    position: [218, 366]
+    font: "Roboto-VariableFont_wdth,wght.ttf"
+    size: 20
+    side: "back"
