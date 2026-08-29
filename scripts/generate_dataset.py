@@ -23,6 +23,7 @@ import io
 import os
 import glob
 import json
+import math
 import random
 import argparse
 import yaml
@@ -92,8 +93,12 @@ LETTER_SPACING_UNIT = 3.0  # global sensitivity multiplier: every field's
 def _render_field_text(font_dir, field, text, fill=(20, 20, 20), scale=SUPERSAMPLE):
     """Render `text` for this field onto a tight transparent RGBA patch at
     `scale`x resolution (letter_spacing/stroke_width applied at that same
-    scale), then downsample. Returns (patch, width, height) at NATIVE
-    resolution, ready to paste directly at the field's position."""
+    scale), then downsample. Returns (patch, width, height, word_boxes) —
+    word_boxes is a list of {"text": word, "bbox": [x0,y0,x1,y1]} at
+    NATIVE resolution, in coordinates local to the patch (add the field's
+    own position to get absolute coordinates). This gives exact per-word
+    boxes for free, since we're the ones drawing the text — no OCR or
+    proportional-splitting approximation needed."""
     spacing = field.get("letter_spacing", 0) * LETTER_SPACING_UNIT * scale
     stroke_width = int(round(field.get("stroke_width", 0) * scale))
     big_font = _load_field_font(font_dir, field, scale=scale)
@@ -110,15 +115,42 @@ def _render_field_text(font_dir, field, text, fill=(20, 20, 20), scale=SUPERSAMP
     cdraw = ImageDraw.Draw(canvas)
     x = 2.0
     y = 2 - ref_bbox[1]
+    canvas_word_boxes = []  # (word_text, x0, x1) in big-scale canvas coords
+    current_word = []
+    word_start_x = None
     for ch in text:
+        if ch == " ":
+            if current_word:
+                canvas_word_boxes.append(("".join(current_word), word_start_x, x))
+                current_word = []
+                word_start_x = None
+            x += pdraw.textlength(ch, font=big_font) + spacing
+            continue
+        if word_start_x is None:
+            word_start_x = x
         cdraw.text((x, y), ch, font=big_font, fill=fill + (255,),
                     stroke_width=stroke_width, stroke_fill=fill + (255,))
+        current_word.append(ch)
         x += pdraw.textlength(ch, font=big_font) + spacing
+    if current_word:
+        canvas_word_boxes.append(("".join(current_word), word_start_x, x))
 
     final_w = max(1, canvas.width // scale)
     final_h = max(1, canvas.height // scale)
     patch = canvas.resize((final_w, final_h), Image.LANCZOS)
-    return patch, final_w, final_h
+
+    native_stroke = stroke_width / scale  # stroke bleeds outward in every
+                                            # direction by ~stroke_width; the
+                                            # plain advance-width box doesn't
+                                            # account for that on its own
+    word_boxes = [
+        {"text": w, "bbox": [
+            max(0, wx0 / scale - native_stroke), 0,
+            min(final_w, wx1 / scale + native_stroke), final_h,
+        ]}
+        for (w, wx0, wx1) in canvas_word_boxes
+    ]
+    return patch, final_w, final_h, word_boxes
 
 
 def draw_fields(bg_path, fields, values, font_dir):
@@ -127,7 +159,10 @@ def draw_fields(bg_path, fields, values, font_dir):
     letter_spacing is actually visible, then composited with alpha for
     clean anti-aliased edges. Assumes the background is already a clean
     (blank-field) template — no erase step. Returns the composited PIL
-    image plus a list of {label, text, bbox}."""
+    image plus a list of one entry per WORD: {label, text, bbox,
+    word_index} — word_index is 0 for the first word of a field, 1 for
+    the second, etc., so a later conversion step can assign B-<label> to
+    word_index 0 and I-<label> to the rest without extra bookkeeping."""
     img = Image.open(bg_path).convert("RGB")
     boxes = []
 
@@ -144,26 +179,67 @@ def draw_fields(bg_path, fields, values, font_dir):
                   f"this background's bounds {img.size} — check its "
                   f"coordinates against the actual image size")
 
-        patch, pw, ph = _render_field_text(font_dir, field, text)
+        patch, pw, ph, word_boxes = _render_field_text(font_dir, field, text)
         paste_pos = (int(round(pos[0])), int(round(pos[1])))
         img.paste(patch, paste_pos, patch)  # patch's own alpha as mask
 
-        bbox = [pos[0], pos[1], pos[0] + pw, pos[1] + ph]
-        boxes.append({"label": name, "text": text, "bbox": bbox})
+        for i, w in enumerate(word_boxes):
+            wx0, wy0, wx1, wy1 = w["bbox"]
+            boxes.append({
+                "label": name,
+                "text": w["text"],
+                "bbox": [pos[0] + wx0, pos[1] + wy0, pos[0] + wx1, pos[1] + wy1],
+                "word_index": i,
+            })
 
     return img, boxes
 
 
-def augment_image(pil_img):
+def _rotate_boxes(boxes, angle_degrees, center):
+    """Rotate each box's corners by the same transform PIL's Image.rotate
+    applies to pixels, then re-enclose in an axis-aligned box. Keeps
+    metadata accurate when augment_image rotates the image."""
+    if angle_degrees == 0:
+        return boxes
+    theta = math.radians(angle_degrees)
+    cos_t, sin_t = math.cos(theta), math.sin(theta)
+    cx, cy = center
+
+    def rotate_point(x, y):
+        dx, dy = x - cx, y - cy
+        return (cx + dx * cos_t - dy * sin_t,
+                cy + dx * sin_t + dy * cos_t)
+
+    rotated = []
+    for b in boxes:
+        x0, y0, x1, y1 = b["bbox"]
+        corners = [rotate_point(x0, y0), rotate_point(x1, y0),
+                   rotate_point(x1, y1), rotate_point(x0, y1)]
+        xs = [c[0] for c in corners]
+        ys = [c[1] for c in corners]
+        rotated.append({
+            **b,
+            "bbox": [min(xs), min(ys), max(xs), max(ys)],
+        })
+    return rotated
+
+
+def augment_image(pil_img, boxes=None):
     """Pure Pillow/numpy realism pass: slight rotation, brightness/contrast
     jitter, blur, noise, and JPEG compression artifacts. Each effect fires
-    with some probability so samples vary in how "real" they look."""
+    with some probability so samples vary in how "real" they look. If
+    `boxes` is given, rotation is applied to them too (same transform as
+    the pixels), so labels stay accurate. Returns (img, boxes) if boxes
+    was given, else just img."""
     img = pil_img
 
     if random.random() < 0.5:
         angle = random.uniform(-3, 3)
         img = img.rotate(angle, expand=False, fillcolor=(255, 255, 255),
                           resample=Image.BICUBIC)
+        if boxes is not None:
+            center = (img.size[0] / 2, img.size[1] / 2)
+            boxes = _rotate_boxes(boxes, -angle, center)
 
     if random.random() < 0.6:
         img = ImageEnhance.Brightness(img).enhance(random.uniform(0.85, 1.15))
@@ -184,7 +260,7 @@ def augment_image(pil_img):
         buf.seek(0)
         img = Image.open(buf).convert("RGB")
 
-    return img
+    return (img, boxes) if boxes is not None else img
 
 
 def add_specimen_watermark(img, text="SPECIMEN — SYNTHETIC DATA"):
@@ -258,14 +334,7 @@ def randomize_framing(img, boxes, canvas_expand=FRAME_CANVAS_EXPAND,
             "label": b["label"],
             "text": b["text"],
             "bbox": [cx0, cy0, cx1, cy1],
-        })
-    for b in boxes:
-        x0, y0, x1, y1 = b["bbox"]
-        remapped_boxes.append({
-            "label": b["label"],
-            "text": b["text"],
-            "bbox": [x0 * scale + offset_x, y0 * scale + offset_y,
-                     x1 * scale + offset_x, y1 * scale + offset_y],
+            "word_index": b["word_index"],
         })
 
     return canvas, remapped_boxes
@@ -294,7 +363,7 @@ def generate_sample(config, values, sample_idx, out_dir, add_watermark=True):
         if not side_fields:
             continue
         img, boxes = draw_fields(bg_path, side_fields, values, font_dir)
-        img = augment_image(img)
+        img, boxes = augment_image(img, boxes)
         if add_watermark:
             img = add_specimen_watermark(img)
         img, boxes = randomize_framing(img, boxes)
