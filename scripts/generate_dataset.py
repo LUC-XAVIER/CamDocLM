@@ -43,28 +43,6 @@ def load_json_values(path):
         return json.load(f)
 
 
-def _sample_patch_color(img, box, margin=6):
-    """Sample the average color of a thin margin around `box` so the erase
-    rectangle blends with the card's local background instead of being a
-    flat guess. box = (x0, y0, x1, y1). Falls back to a neutral patch if
-    the box is degenerate (e.g. field position outside the image bounds)
-    rather than crashing."""
-    x0, y0, x1, y1 = box
-    x0, x1 = sorted((x0, x1))
-    y0, y1 = sorted((y0, y1))
-    w, h = img.size
-    sx0, sy0 = max(0, min(w, x0 - margin)), max(0, min(h, y0 - margin))
-    sx1, sy1 = max(0, min(w, x1 + margin)), max(0, min(h, y1 + margin))
-    if sx1 <= sx0 or sy1 <= sy0:
-        return (235, 235, 230)
-    strip = np.array(img.crop((sx0, sy0, sx1, sy1)))
-    # use the border pixels of the strip (not the field itself) as the sample
-    border = np.concatenate([
-        strip[0, :, :], strip[-1, :, :], strip[:, 0, :], strip[:, -1, :]
-    ])
-    return tuple(int(c) for c in border.mean(axis=0))
-
-
 def _load_field_font(font_dir, field, scale=1):
     """Load a font, applying a weight instance if the field asks for one
     and the font file is a variable font. `scale` renders at a higher
@@ -103,13 +81,20 @@ SUPERSAMPLE = 4  # render text at 4x then downsample with anti-aliasing —
                   # 2px at 4x, gets drawn as a real pixel, then blends back
                   # down smoothly instead of being rounded away to nothing
 
+LETTER_SPACING_UNIT = 3.0  # global sensitivity multiplier: every field's
+                            # letter_spacing value is multiplied by this
+                            # before rendering. Bump this up if your usual
+                            # values (0.2-0.5) look too subtle across the
+                            # board; tune per-field values as before, this
+                            # just scales all of them together.
+
 
 def _render_field_text(font_dir, field, text, fill=(20, 20, 20), scale=SUPERSAMPLE):
     """Render `text` for this field onto a tight transparent RGBA patch at
     `scale`x resolution (letter_spacing/stroke_width applied at that same
     scale), then downsample. Returns (patch, width, height) at NATIVE
     resolution, ready to paste directly at the field's position."""
-    spacing = field.get("letter_spacing", 0) * scale
+    spacing = field.get("letter_spacing", 0) * LETTER_SPACING_UNIT * scale
     stroke_width = int(round(field.get("stroke_width", 0) * scale))
     big_font = _load_field_font(font_dir, field, scale=scale)
 
@@ -136,14 +121,13 @@ def _render_field_text(font_dir, field, text, fill=(20, 20, 20), scale=SUPERSAMP
     return patch, final_w, final_h
 
 
-def draw_fields(bg_path, fields, values, font_dir, field_box_padding=4):
+def draw_fields(bg_path, fields, values, font_dir):
     """Draw every field belonging to one side onto its background image.
     Text is rendered supersampled (see _render_field_text) so fractional
     letter_spacing is actually visible, then composited with alpha for
-    clean anti-aliased edges. Erases the existing template content in
-    each field's region first (sampled local background color) so new
-    text replaces old rather than overlapping it. Returns the composited
-    PIL image plus a list of {label, text, bbox}."""
+    clean anti-aliased edges. Assumes the background is already a clean
+    (blank-field) template — no erase step. Returns the composited PIL
+    image plus a list of {label, text, bbox}."""
     img = Image.open(bg_path).convert("RGB")
     boxes = []
 
@@ -161,17 +145,6 @@ def draw_fields(bg_path, fields, values, font_dir, field_box_padding=4):
                   f"coordinates against the actual image size")
 
         patch, pw, ph = _render_field_text(font_dir, field, text)
-        erase_w = field.get("max_width", pw)
-        erase_box = (
-            pos[0] - field_box_padding,
-            pos[1] - field_box_padding,
-            pos[0] + erase_w + field_box_padding,
-            pos[1] + ph + field_box_padding,
-        )
-        patch_color = _sample_patch_color(img, erase_box)
-        draw = ImageDraw.Draw(img)
-        draw.rectangle(erase_box, fill=patch_color)
-
         paste_pos = (int(round(pos[0])), int(round(pos[1])))
         img.paste(patch, paste_pos, patch)  # patch's own alpha as mask
 
@@ -230,8 +203,79 @@ def add_specimen_watermark(img, text="SPECIMEN — SYNTHETIC DATA"):
     return Image.alpha_composite(img.convert("RGBA"), rotated).convert("RGB")
 
 
+FRAME_CANVAS_EXPAND = 1.8          # final canvas is this much larger than
+                                    # the card's own template size — gives
+                                    # room to pan the card left/right/up/down
+FRAME_SCALE_RANGE = (0.35, 2.0)    # random zoom applied to the card before
+                                    # placing it on the canvas. Below 1.0 =
+                                    # card looks farther away (more backdrop
+                                    # visible); above 1.0 can exceed the
+                                    # canvas entirely — mimics a too-close
+                                    # photo with edges cropped off
+FRAME_BACKDROP_COLOR = (210, 205, 195)  # neutral area around the card
+
+
+def randomize_framing(img, boxes, canvas_expand=FRAME_CANVAS_EXPAND,
+                       scale_range=FRAME_SCALE_RANGE,
+                       backdrop_color=FRAME_BACKDROP_COLOR):
+    """Places the fully-rendered card onto a larger canvas at a random
+    scale and offset, so the card isn't always centered/full-frame like
+    the raw template — mimics a photo taken from varying distance and
+    position. When the scaled card is bigger than the canvas, it's
+    allowed to hang off any edge (cropped), same as a photo taken too
+    close. Remaps every field's bbox to match, clipping to what's
+    actually visible and dropping fields that end up entirely out of
+    frame — metadata never claims a field is there when it's been
+    cropped out. Field positions on the card itself are untouched —
+    this only changes where the card sits in the frame."""
+    card_w, card_h = img.size
+    canvas_w = int(card_w * canvas_expand)
+    canvas_h = int(card_h * canvas_expand)
+
+    scale = random.uniform(*scale_range)
+    scaled_w = max(1, int(card_w * scale))
+    scaled_h = max(1, int(card_h * scale))
+    scaled_img = img.resize((scaled_w, scaled_h), Image.LANCZOS)
+
+    lo_x, hi_x = sorted((0, canvas_w - scaled_w))
+    lo_y, hi_y = sorted((0, canvas_h - scaled_h))
+    offset_x = random.randint(lo_x, hi_x)
+    offset_y = random.randint(lo_y, hi_y)
+
+    canvas = Image.new("RGB", (canvas_w, canvas_h), backdrop_color)
+    canvas.paste(scaled_img, (offset_x, offset_y))
+
+    remapped_boxes = []
+    for b in boxes:
+        x0, y0, x1, y1 = b["bbox"]
+        nx0, ny0 = x0 * scale + offset_x, y0 * scale + offset_y
+        nx1, ny1 = x1 * scale + offset_x, y1 * scale + offset_y
+        cx0, cy0 = max(0, nx0), max(0, ny0)
+        cx1, cy1 = min(canvas_w, nx1), min(canvas_h, ny1)
+        if cx1 - cx0 < 2 or cy1 - cy0 < 2:
+            continue  # cropped out of frame — don't mislabel it as visible
+        remapped_boxes.append({
+            "label": b["label"],
+            "text": b["text"],
+            "bbox": [cx0, cy0, cx1, cy1],
+        })
+    for b in boxes:
+        x0, y0, x1, y1 = b["bbox"]
+        remapped_boxes.append({
+            "label": b["label"],
+            "text": b["text"],
+            "bbox": [x0 * scale + offset_x, y0 * scale + offset_y,
+                     x1 * scale + offset_x, y1 * scale + offset_y],
+        })
+
+    return canvas, remapped_boxes
+
+
 def generate_sample(config, values, sample_idx, out_dir, add_watermark=True):
-    os.makedirs(out_dir, exist_ok=True)
+    images_dir = os.path.join(out_dir, "images")
+    metadata_dir = os.path.join(out_dir, "metadata")
+    os.makedirs(images_dir, exist_ok=True)
+    os.makedirs(metadata_dir, exist_ok=True)
     doc_type = config["document_type"]
     font_dir = config["fonts"]
     backgrounds = config["backgrounds"]
@@ -253,12 +297,13 @@ def generate_sample(config, values, sample_idx, out_dir, add_watermark=True):
         img = augment_image(img)
         if add_watermark:
             img = add_specimen_watermark(img)
+        img, boxes = randomize_framing(img, boxes)
 
         img_name = f"{doc_type}_{sample_idx:04d}_{side}.png"
-        img.save(os.path.join(out_dir, img_name))
+        img.save(os.path.join(images_dir, img_name))
         all_boxes[side] = boxes
 
-    meta_path = os.path.join(out_dir, f"{doc_type}_{sample_idx:04d}_meta.json")
+    meta_path = os.path.join(metadata_dir, f"{doc_type}_{sample_idx:04d}_meta.json")
     with open(meta_path, "w", encoding="utf-8") as f:
         json.dump(all_boxes, f, ensure_ascii=False, indent=2)
 
@@ -272,13 +317,16 @@ def main(num_per_json=1):
     for config_path in config_files:
         config = load_config(config_path)
         doc_type = config.get("document_type", os.path.basename(config_path))
-        json_samples = config.get("json_samples", [])
+        json_samples = list(config.get("json_samples", []))
+        json_dir = config.get("json_dir")
+        if json_dir:
+            json_samples += sorted(glob.glob(os.path.join(json_dir, "*.json")))
 
         if not json_samples:
             print(f"[{doc_type}] no 'json_samples' listed in {config_path} — skipping")
             continue
 
-        out_dir = OUTPUT_DIR
+        out_dir = os.path.join(OUTPUT_DIR, doc_type)
         idx = 0
         for json_path in json_samples:
             if not os.path.exists(json_path):

@@ -3,82 +3,75 @@ backgrounds:
   - "data/bg/cameroon_nic_v1/FrontNIC_fixed_blank.png"
   - "data/bg/cameroon_nic_v1/backNIC_fixed_blank.png"
 fonts: "data/fonts/"
-json_samples:
-  - "data/json/nic_v1_sample.json"
+json_dir: "data/json/nic_v1"
 fields:
   # --- FRONT (810x1079) ---
   # Data fields in the lower portion of the portrait card
   - name: "surname"
-    position: [159, 766]    # decreased by 20
+    position: [159, 770]    # decreased by 20
     font: "ARIALNB.TTF"
-    letter_spacing: 1.5
+    letter_spacing: 0.5
     size: 26
     side: "front"
   - name: "given_names"
-    position: [158, 822]
+    position: [158, 829]
     font: "ARIALNB.TTF"
-    letter_spacing: 1.5
+    letter_spacing: 0.5
     size: 26
     side: "front"
   - name: "date_of_birth"
-    position: [157, 876]
+    position: [157, 883]
     font: "ARIALNB.TTF"
-    letter_spacing: 1.5
+    letter_spacing: 0.5
     size: 26
     side: "front"
   - name: "sex"
-    position: [452, 875]
+    position: [452, 882]
     font: "arialbd.ttf"
-    letter_spacing: 1.5
+    letter_spacing: 1
     size: 26
     side: "front"
   - name: "expiry_date"
-    position: [156, 931]
+    position: [156, 937]
     font: "ARIALNB.TTF"
-    letter_spacing: 1.5
+    letter_spacing: 0.5
     size: 26
     side: "front"
   # --- BACK (810x1078) ---
   # All remaining fields are on the back
   - name: "father_name"
-    position: [116, 497]
+    position: [116, 505]
     font: "ARIALNB.TTF"
-    letter_spacing: 1.5
-    size: 26
+    size: 30
     side: "back"
   - name: "mother_name"
-    position: [116, 563]
+    position: [116, 572]
     font: "ARIALNB.TTF"
-    letter_spacing: 1.5
-    size: 26
+    size: 30
     side: "back"
   - name: "place_of_birth"
-    position: [116, 630]
+    position: [116, 636]
     font: "ARIALNB.TTF"
-    letter_spacing: 1.5
-    size: 26
+    size: 32
     side: "back"
   - name: "occupation"
-    position: [118, 696]
+    position: [118, 704]
     font: "ARIALNB.TTF"
-    letter_spacing: 1.5
-    size: 26
+    size: 32
     side: "back"
   - name: "issue_date"
-    position: [118, 780]
+    position: [118, 789]
     font: "ARIALNB.TTF"
-    letter_spacing: 1.5
-    size: 26
+    size: 32
     side: "back"
   - name: "height"
-    position: [326, 783]
+    position: [326, 789]
     font: "ARIALNB.TTF"
-    letter_spacing: 1.5
-    size: 26
+    size: 32
     side: "back"
   - name: "nic_number"
-    position: [118, 847]
+    position: [118, 854]
     font: "arialbd.ttf"
-    letter_spacing: 1.5
-    size: 36
+    letter_spacing: 0.2
+    size: 38
     side: "back"

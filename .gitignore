@@ -1,7 +1,4 @@
 .vscode/
 
 # documents' sample reference images
-data/bg
-
-# generated dataset
-data/output/
+data/
