@@ -1,0 +1,100 @@
+document_type: "Cameroon_Passport"
+backgrounds:
+  - "data/bg/cameroon_passport/passport_blank.png"
+fonts: "data/fonts/"
+json_dir: "data/json/passport"
+fields:
+  # --- FRONT only (1080x810) ---
+  - name: "type"
+    position: [386, 86]
+    font: "arial.ttf"
+    weight: "bold"
+    size: 20
+    side: "front"
+  - name: "country_code"
+    position: [501, 86]
+    font: "arial.ttf"
+    weight: "bold"
+    size: 20
+    side: "front"
+  - name: "passport_number"
+    position: [712, 87]
+    font: "arial.ttf"
+    weight: "bold"
+    size: 20
+    side: "front"
+  - name: "surname"
+    position: [385, 131]
+    font: "arial.ttf"
+    weight: "bold"
+    size: 20
+    side: "front"
+  - name: "given_names"
+    position: [384, 172]
+    font: "arial.ttf"
+    weight: "bold"
+    size: 20
+    side: "front"
+  - name: "nationality"
+    position: [386, 217]
+    font: "arial.ttf"
+    weight: "bold"
+    size: 20
+    side: "front"
+  - name: "occupation"
+    position: [718, 218]
+    font: "arial.ttf"
+    weight: "bold"
+    size: 20
+    side: "front"
+  - name: "date_of_birth"
+    position: [383, 261]
+    font: "arial.ttf"
+    weight: "bold"
+    size: 20
+    side: "front"
+  - name: "height"
+    position: [715, 261]
+    font: "arial.ttf"
+    weight: "bold"
+    size: 20
+    side: "front"
+  - name: "can"
+    position: [867, 261]
+    font: "arial.ttf"
+    letter_spacing: 1.5
+    weight: "bold"
+    size: 20
+    side: "front"
+  - name: "sex"
+    position: [381, 307]
+    font: "arial.ttf"
+    weight: "bold"
+    size: 20
+    side: "front"
+  - name: "place_of_birth"
+    position: [504, 307]
+    font: "arial.ttf"
+    weight: "bold"
+    size: 20
+    side: "front"
+  # Row 6: issue_date | place_of_issue
+  - name: "issue_date"
+    position: [384, 353]
+    font: "arial.ttf"
+    weight: "bold"
+    size: 20
+    side: "front"
+  - name: "place_of_issue"
+    position: [725, 353]
+    font: "arial.ttf"
+    weight: "bold"
+    size: 20
+    side: "front"
+  # Row 7: expiry_date
+  - name: "expiry_date"
+    position: [384, 400]
+    font: "arial.ttf"
+    weight: "bold"
+    size: 20
+    side: "front"
