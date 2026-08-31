@@ -35,7 +35,7 @@ def normalize_bbox(bbox, width, height):
     return [nx0, ny0, nx1, ny1]
 
 
-def build_example(image_path, words_meta, example_id):
+def build_example(image_path, words_meta, example_id, path_prefix=""):
     with Image.open(image_path) as img:
         width, height = img.size
 
@@ -46,11 +46,13 @@ def build_example(image_path, words_meta, example_id):
         prefix = "B-" if w["word_index"] == 0 else "I-"
         ner_tags.append(f'{prefix}{w["label"].upper()}')
 
+    stored_path = image_path.replace(os.sep, "/")
+    if path_prefix:
+        stored_path = f"{path_prefix.rstrip('/')}/{stored_path}"
+
     return {
         "id": example_id,
-        # forward slash forced explicitly — os.path.join gives "\" on
-        # Windows, which breaks when the JSONL is later read on Linux/Colab
-        "image_path": image_path.replace(os.sep, "/"),
+        "image_path": stored_path,
         "width": width,
         "height": height,
         "words": words,
@@ -59,7 +61,7 @@ def build_example(image_path, words_meta, example_id):
     }
 
 
-def collect_examples(doc_dir):
+def collect_examples(doc_dir, path_prefix=""):
     images_dir = os.path.join(doc_dir, "images")
     metadata_dir = os.path.join(doc_dir, "metadata")
     meta_paths = sorted(glob.glob(os.path.join(metadata_dir, "*_meta.json")))
@@ -80,7 +82,7 @@ def collect_examples(doc_dir):
                 print(f"  [skip] missing image for {base} ({side})")
                 continue
             example_id = f"{base}_{side}"
-            examples.append(build_example(image_path, words_meta, example_id))
+            examples.append(build_example(image_path, words_meta, example_id, path_prefix))
             all_labels.update(w["label"].upper() for w in words_meta)
 
     return examples, sorted(all_labels)
@@ -99,12 +101,15 @@ def main():
     parser.add_argument("--val-frac", type=float, default=0.1)
     parser.add_argument("--test-frac", type=float, default=0.1)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--path-prefix", default="",
+                         help="Prepended to every stored image_path, e.g. 'sample_data' "
+                              "if that's where the files actually end up on Colab")
     args = parser.parse_args()
 
     random.seed(args.seed)
     os.makedirs(args.out_dir, exist_ok=True)
 
-    examples, labels = collect_examples(args.doc_dir)
+    examples, labels = collect_examples(args.doc_dir, args.path_prefix)
     if not examples:
         print("No examples found — check --doc-dir path.")
         return
